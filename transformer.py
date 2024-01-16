@@ -45,13 +45,10 @@ class Transformer(nn.Module):
     def forward(self, x, labels=None):
         input_shape = x.shape
         bsz, seq_len = input_shape[0], input_shape[1]
-
+        
         positions = torch.arange(seq_len, dtype=torch.long, device=x.device)
         position_embeddings = self.wpe(positions)
-        print(f"position_embeddings.shape: {position_embeddings.shape}")
-        print(f"x.shape: {x.shape}")
         x = self.wte(x) + position_embeddings
-        print(f"x.shape: {x.shape}")
         x = self.norm_f(x)
         for i in range(len(self.h)):
             x = self.h[i](x)
@@ -59,7 +56,6 @@ class Transformer(nn.Module):
 
         loss = None
         if labels is not None:
-            labels = labels.to(x.device)
             loss_fct = nn.CrossEntropyLoss()
             loss = loss_fct(logits.view(-1, self.vocab_size), labels.view(-1))
         

@@ -25,8 +25,16 @@ class TextDataset(Dataset):
         tokenized_text = self.tokenizer.encode(self.entry)
 
         for i in range(0, len(tokenized_text), self.max_length):
-            self.inputs.append(tokenized_text[i:i+self.max_length])
-            self.labels.append(tokenized_text[i+1:i+self.max_length+1])
+            a = tokenized_text[i:i+self.max_length]
+            b = tokenized_text[i+1:i+self.max_length+1]
+            if len(a) != self.max_length:
+                print(f"{i} this has a different length: {len(a)}, padding") 
+                a = a + [0 for _ in range(self.max_length - len(a))]
+                b = b + [0 for _ in range(self.max_length - len(b))]
+                print(len(a))
+                print(len(b))
+            self.inputs.append(a)
+            self.labels.append(b)
             
     def _prepare_bin(self):
         tokenized_bin = torch.from_numpy(np.array(self.entry)).long()
