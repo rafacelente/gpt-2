@@ -19,10 +19,14 @@ class TextDataModule(LightningDataModule):
         self.text_predict = None
     
     def setup(self, stage=None):
-        dataset = TextDataset(self.data, self.tokenizer, self.max_length, max_length=self.max_length, input_type=self.input_type)
+        dataset = TextDataset(self.data, self.tokenizer, max_length=self.max_length, input_type=self.input_type)
         if stage == "fit":
+            train_size = int(len(dataset) * self.train_test_split)
+            val_size = len(dataset) - train_size
             self.text_train, self.text_val = random_split(
-                dataset, [int(len(dataset) * self.train_test_split), int(len(dataset) * (1 - self.train_test_split))], generator=torch.Generator().manual_seed(self.seed)
+                dataset, 
+                [train_size, val_size], 
+                generator=torch.Generator().manual_seed(self.seed)
             )
         if stage == "predict":
             self.text_predict = dataset
