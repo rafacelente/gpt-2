@@ -27,23 +27,30 @@ class GPT2:
             with open(data, 'r') as f:
                 data = f.read()
 
-        datamodule = TextDataModule(data, tokenizer, batch_size=8, max_length=128, input_type="text", train_test_split=0.8, seed=42)
+        datamodule = TextDataModule(
+                        data, 
+                        tokenizer, 
+                        batch_size=8, 
+                        max_length=128, 
+                        input_type="text", 
+                        train_test_split=0.8, 
+                        seed=42)
         return GPT2(module, datamodule)
 
     
     def __init__(self, module: GPT2Module, datamodule: TextDataModule):
         self.module = module
         self.datamodule = datamodule
-        # TODO: add trainer configuration
+        self.trainer = None
+
+    def train(self, max_epochs: int = 1, devices: int = 1, accelerator: str = "gpu"):
         self.trainer = pl.Trainer(
-            accelerator="gpu",
-            devices=1,
-            max_epochs=1,
+            accelerator=accelerator,
+            devices=devices,
+            max_epochs=max_epochs,
         )
-
-    def train(self):
         self.trainer.fit(self.module, self.datamodule)
-
+        
     def generate(
             self,
             prompt,
