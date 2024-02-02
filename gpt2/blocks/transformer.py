@@ -1,7 +1,6 @@
 import torch
 from torch import nn
-from gpt2.blocks.attention import SelfAttention
-from gpt2.blocks.feedforward import FeedForward
+from gpt2.blocks import SelfAttention, FeedForward
 
 
 class TransformerBlock(nn.Module):

@@ -1,10 +1,10 @@
 import tiktoken
 from gpt2.blocks import Transformer
-from modules import GPT2Module, TextDataModule
+from gpt2.modules import GPT2Module, TextDataModule
 import torch
 import torch.nn.functional as F
 import pytorch_lightning as pl
-from typing import Optional, Literal
+from typing import Literal
 
 class GPT2:
     @staticmethod
