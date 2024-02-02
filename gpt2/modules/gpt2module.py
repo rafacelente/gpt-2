@@ -1,9 +1,8 @@
 # import tiktoken
-from src.blocks import Transformer
+from gpt2.blocks import Transformer
 import torch
 import torch.nn.functional as F
 import pytorch_lightning as pl
-import tiktoken
 
 class GPT2Module(pl.LightningModule):
     def __init__(self, model:Transformer, tokenizer:object):

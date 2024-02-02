@@ -1,5 +1,5 @@
 from pytorch_lightning import LightningDataModule
-from src.modules.data.text_dataset import TextDataset
+from gpt2.modules.data.text_dataset import TextDataset
 from torch.utils.data import DataLoader, default_collate, random_split
 import torch
 from typing import Optional

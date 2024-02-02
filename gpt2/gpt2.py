@@ -1,5 +1,5 @@
 import tiktoken
-from src.blocks import Transformer
+from gpt2.blocks import Transformer
 from modules import GPT2Module, TextDataModule
 import torch
 import torch.nn.functional as F

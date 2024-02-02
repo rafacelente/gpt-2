@@ -1,1 +1,1 @@
-from src.modules.data import TextDataModule
+from gpt2.modules.data import TextDataModule

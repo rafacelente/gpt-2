@@ -1,3 +1,3 @@
-from src.blocks.attention import SelfAttention
-from src.blocks.feedforward import FeedForward
-from src.blocks.transformer import Transformer
+from gpt2.blocks.attention import SelfAttention
+from gpt2.blocks.feedforward import FeedForward
+from gpt2.blocks.transformer import Transformer
