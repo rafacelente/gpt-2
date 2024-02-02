@@ -21,7 +21,6 @@ class TextDataset(Dataset):
             self._prepare_bin()
     
     def _prepare_text(self):
-        #for text in self.entry:
         tokenized_text = self.tokenizer.encode(self.entry)
 
         for i in range(0, len(tokenized_text), self.max_length):
@@ -31,8 +30,6 @@ class TextDataset(Dataset):
                 print(f"{i} this has a different length: {len(a)}, padding") 
                 a = a + [0 for _ in range(self.max_length - len(a))]
                 b = b + [0 for _ in range(self.max_length - len(b))]
-                print(len(a))
-                print(len(b))
             self.inputs.append(a)
             self.labels.append(b)
             

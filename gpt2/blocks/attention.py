@@ -9,7 +9,7 @@ class SelfAttention(nn.Module):
         self.c_attn = nn.Linear(dim, dim*3, bias=True, device=device) # W_q, W_k, W_v, that's why dim*3
         self.c_proj = nn.Linear(dim, dim, bias=True, device=device)
         self.attn_dropout = nn.Dropout(dropout)
-        self.n_heads = n_heads # GPT-2-small uses 12 heads
+        self.n_heads = n_heads
         self.dim = dim # Embedding dimension
         self.head_dim = dim // n_heads
 
