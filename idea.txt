@@ -1,1 +1,0 @@
-Implement GPT-2 from scratch in PyTorch
