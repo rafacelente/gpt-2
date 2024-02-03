@@ -10,8 +10,8 @@ def collate_batch(batch, max_length=1024):
     input_ids, labels = zip(*batch)
 
     max_len = max(len(x) for x in input_ids)
-    padded_inputs = pad_sequence([torch.tensor(input_id) for input_id in input_ids], batch_first=True, padding_value=0)
-    padded_labels = pad_sequence([torch.tensor(label) for label in labels], batch_first=True, padding_value=-100)
+    padded_inputs = pad_sequence(input_ids, batch_first=True, padding_value=0)
+    padded_labels = pad_sequence(labels, batch_first=True, padding_value=-100)
     
     if max_len > max_length:
         padded_inputs = padded_inputs[:, :1024]

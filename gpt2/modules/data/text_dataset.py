@@ -43,7 +43,8 @@ class TextDataset(Dataset):
                 b.append(self.tokenizer.eot_token)
             else:
                 a = tokenized_text[i:i+self.max_length]
-                b = tokenized_text[i+1:i+self.max_length+1]
+                b = tokenized_text[i+1:i+self.max_length]
+                b.append(self.tokenizer.eot_token)
             self.inputs.append(a)
             self.labels.append(b)
         
