@@ -4,17 +4,17 @@ from gpt2.modules import GPT2Module, TextDataModule
 import torch
 import torch.nn.functional as F
 import pytorch_lightning as pl
-from typing import Literal
+from typing import Literal, Optional
 
 class GPT2:
     @staticmethod
     def build(
             data: str, 
-            model_size:str="gpt2", 
-            input_type:Literal["parquet", "text", "path"]="parquet",
-            max_length:int=1024,
-            batch_size:int=8,
-            train_test_split:float=0.8,
+            model_size: Optional[str] = "gpt2", 
+            input_type: Optional[Literal["parquet", "text", "path"]]="parquet",
+            max_length: Optional[int] = 1024,
+            batch_size: Optional[int] = 8,
+            train_test_split: Optional[float] = 0.8,
         ):
         tokenizer = tiktoken.get_encoding(model_size)
         # TODO: Change model based on model_size
