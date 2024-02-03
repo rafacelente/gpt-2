@@ -22,8 +22,10 @@ class TextDataset(Dataset):
     def from_parquet(cls, file_path: str, tokenizer: object, max_length: int=1024):
         import pandas as pd
         dataset = cls(file_path, tokenizer, max_length)
+        print(f'Reading parquet file {file_path}...')
         df = pd.read_parquet(file_path)
 
+        print('Tokenizing text...')
         for text in df['text']:
             text = '<|endoftext|>' + text
             tokenized_text = tokenizer.encode(text, allowed_special={'<|endoftext|>'})
