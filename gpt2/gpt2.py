@@ -31,8 +31,8 @@ class GPT2:
                         data, 
                         tokenizer, 
                         batch_size=8, 
-                        max_length=128, 
-                        input_type="text", 
+                        max_length=512, 
+                        input_type="text",
                         train_test_split=0.8, 
                         seed=42)
         return GPT2(module, datamodule)
@@ -63,8 +63,8 @@ class GPT2:
             num_return_sequences=1, 
             batch_size=1,
             device="cuda"):
-        model = self.module.model.to(device)
-        prompt_tokens = self.tokenizer.encode(prompt)
+        prompt_tokens = self.module.tokenizer.encode(prompt)
+        self.module.model = self.module.model.to(device)
         for _ in range(num_return_sequences):
             generated = torch.tensor([prompt_tokens])
             prompt_len = len(prompt_tokens)
@@ -72,8 +72,7 @@ class GPT2:
 
             for _ in range(max_len):
                 with torch.no_grad():
-                    outputs, _ = model(generated)
-                    print(outputs[1])
+                    outputs = self.module.model(generated)
                     next_token_logits = outputs[0][:, -1, :]
                     # for token in set(generated[0].tolist()):
                     #     next_token_logits[token] /= repetition_penalty
@@ -86,5 +85,5 @@ class GPT2:
                     generated = torch.cat((generated, next_token), dim=1)
 
             result = generated[0].tolist()
-            text = self.tokenizer.decode(result[prompt_len:])
+            text = self.module.tokenizer.decode(result[prompt_len:])
         return text

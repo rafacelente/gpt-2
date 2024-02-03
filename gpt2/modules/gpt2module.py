@@ -16,13 +16,13 @@ class GPT2Module(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         _, loss = self.model(x, y)
-        self.log("train_loss", loss)
+        self.log("train_loss", loss, prog_bar=True)
         return loss
     
     def validation_step(self, batch, batch_idx):
         x, y = batch
         _, loss = self.model(x, y)
-        self.log("val_loss", loss)
+        self.log("val_loss", loss, prog_bar=True)
         return loss
     
     def predict_step(self, batch, batch_idx, dataloader_idx=None):
