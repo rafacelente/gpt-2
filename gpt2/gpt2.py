@@ -11,7 +11,7 @@ class GPT2:
     def build(
             data: str, 
             model_size:str="gpt2", 
-            input_type:Literal["path", "text"]="path"
+            input_type:Literal["parquet", "text"]="parquet"
         ):
         tokenizer = tiktoken.get_encoding(model_size)
         model = Transformer(
@@ -31,8 +31,8 @@ class GPT2:
                         data, 
                         tokenizer, 
                         batch_size=8, 
-                        max_length=512, 
-                        input_type="text",
+                        max_length=1024, 
+                        input_type="parquet",
                         train_test_split=0.8, 
                         seed=42)
         return GPT2(module, datamodule)

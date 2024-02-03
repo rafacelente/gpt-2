@@ -24,8 +24,8 @@ class TextDataset(Dataset):
         df = pd.read_parquet(file_path)
 
         for text in df['text']:
-            text = '<|endoftext|>' + text + '<|endoftext|>'
-            tokenized_text = tokenizer.encode(text)
+            text = '<|endoftext|>' + text
+            tokenized_text = tokenizer.encode(text, allowed_special={'<|endoftext|>'})
             dataset._prepare_parquet(tokenized_text)
 
         return dataset
@@ -35,7 +35,9 @@ class TextDataset(Dataset):
         for i in range(0, tokenized_text_length, self.max_length):
             if i + self.max_length > tokenized_text_length:
                 a = tokenized_text[i:tokenized_text_length]
-                b = tokenized_text[i + 1:tokenized_text_length + 1]
+                b = tokenized_text[i + 1:tokenized_text_length]
+                # add end of token
+                b.append(self.tokenizer.eot_token)
             else:
                 a = tokenized_text[i:i+self.max_length]
                 b = tokenized_text[i+1:i+self.max_length+1]
