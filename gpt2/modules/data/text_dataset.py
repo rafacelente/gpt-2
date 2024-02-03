@@ -1,8 +1,9 @@
 from torch.utils.data import Dataset
 import torch
+from typing import Optional
 
 class TextDataset(Dataset):
-    def __init__(self, entry, tokenizer, max_length=1024):
+    def __init__(self, entry: str, tokenizer: object, max_length: Optional[str]=1024):
         self.entry = entry
         self.inputs = []
         self.labels = []
@@ -10,7 +11,7 @@ class TextDataset(Dataset):
         self.tokenizer = tokenizer
 
     @classmethod
-    def from_file(cls, file_path, tokenizer, max_length=1024):
+    def from_file(cls, file_path: str, tokenizer: object, max_length: Optional[int] =1024):
         with open(file_path, "r") as f:
             entry = f.read()
         dataset = cls(entry, tokenizer, max_length)
@@ -18,9 +19,9 @@ class TextDataset(Dataset):
         return dataset
     
     @classmethod
-    def from_parquet(cls, file_path, tokenizer, max_length=1024):
+    def from_parquet(cls, file_path: str, tokenizer: object, max_length: int=1024):
         import pandas as pd
-        dataset = cls(tokenizer, max_length)
+        dataset = cls(file_path, tokenizer, max_length)
         df = pd.read_parquet(file_path)
 
         for text in df['text']:
