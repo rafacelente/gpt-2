@@ -17,6 +17,7 @@ class TextDataset(Dataset):
         dataset._prepare_text()
         return dataset
     
+    @classmethod
     def from_parquet(cls, file_path, tokenizer, max_length=1024):
         import pandas as pd
         dataset = cls(tokenizer, max_length)
