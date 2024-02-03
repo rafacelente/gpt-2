@@ -20,7 +20,7 @@ def collate_batch(batch, max_length=1024):
     return padded_inputs, padded_labels
 
 class TextDataModule(LightningDataModule):
-    def __init__(self, data, tokenizer, batch_size:int=8, max_length:int=1024, input_type:Optional[str]="text", train_test_split:float=0.8, seed:int=42):
+    def __init__(self, data, tokenizer, batch_size:int=8, max_length:int=1024, input_type:Optional[str]="parquet", train_test_split:float=0.8, seed:int=42):
         super().__init__()
         self.data = data
         self.tokenizer = tokenizer
@@ -32,9 +32,13 @@ class TextDataModule(LightningDataModule):
         self.text_train = None
         self.text_val = None
         self.text_predict = None
-    
+
     def setup(self, stage=None):
-        dataset = TextDataset(self.data, self.tokenizer, max_length=self.max_length, input_type=self.input_type)
+        if self.input_type == "parquet":
+            dataset = TextDataset.from_parquet(self.data, self.tokenizer, max_length=self.max_length)
+        elif self.input_type == "text":
+            dataset = TextDataset.from_file(self.data, self.tokenizer, max_length=self.max_length)
+        
         if stage == "fit":
             train_size = int(len(dataset) * self.train_test_split)
             val_size = len(dataset) - train_size
