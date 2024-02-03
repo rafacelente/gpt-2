@@ -1,24 +1,46 @@
 from torch.utils.data import Dataset
 import torch
-import numpy as np
-
 
 class TextDataset(Dataset):
-    def __init__(self, entry, tokenizer, max_length=128, input_type="text"):
+    def __init__(self, entry, tokenizer, max_length=1024):
         self.entry = entry
         self.inputs = []
         self.labels = []
         self.max_length = max_length
         self.tokenizer = tokenizer
-        self.input_type = input_type
 
-        self.prepare()
+    @classmethod
+    def from_file(cls, file_path, tokenizer, max_length=1024):
+        with open(file_path, "r") as f:
+            entry = f.read()
+        dataset = cls(entry, tokenizer, max_length)
+        dataset._prepare_text()
+        return dataset
+    
+    def from_parquet(cls, file_path, tokenizer, max_length=1024):
+        import pandas as pd
+        dataset = cls(tokenizer, max_length)
+        df = pd.read_parquet(file_path)
 
-    def prepare(self):
-        if self.input_type == "text":
-            self._prepare_text()
-        elif self.input_type == "bin":
-            self._prepare_bin()
+        for text in df['text']:
+            text = '<|endoftext|>' + text + '<|endoftext|>'
+            tokenized_text = tokenizer.encode(text)
+            dataset._prepare_parquet(tokenized_text)
+
+        return dataset
+
+    def _prepare_parquet(self, tokenized_text):
+        tokenized_text_length = len(tokenized_text)
+        for i in range(0, tokenized_text_length, self.max_length):
+            if i + self.max_length > tokenized_text_length:
+                a = tokenized_text[i:tokenized_text_length]
+                b = tokenized_text[i + 1:tokenized_text_length + 1]
+            else:
+                a = tokenized_text[i:i+self.max_length]
+                b = tokenized_text[i+1:i+self.max_length+1]
+            self.inputs.append(a)
+            self.labels.append(b)
+        
     
     def _prepare_text(self):
         tokenized_text = self.tokenizer.encode(self.entry)
@@ -32,13 +54,6 @@ class TextDataset(Dataset):
                 b = b + [0 for _ in range(self.max_length - len(b))]
             self.inputs.append(a)
             self.labels.append(b)
-            
-    def _prepare_bin(self):
-        tokenized_bin = torch.from_numpy(np.array(self.entry)).long()
-
-        for i in range(0, len(tokenized_bin), self.max_length):
-            self.inputs.append(tokenized_bin[i:i+self.max_length])
-            self.labels.append(tokenized_bin[i+1:i+self.max_length+1])
 
     def __len__(self):
         return len(self.inputs)

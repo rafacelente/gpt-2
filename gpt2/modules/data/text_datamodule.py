@@ -3,9 +3,24 @@ from gpt2.modules.data.text_dataset import TextDataset
 from torch.utils.data import DataLoader, default_collate, random_split
 import torch
 from typing import Optional
+from torch.nn.utils.rnn import pad_sequence
+
+
+def collate_batch(batch, max_length=1024):
+    input_ids, labels = zip(*batch)
+
+    max_len = max(len(x) for x in input_ids)
+    padded_inputs = pad_sequence([torch.tensor(input_id) for input_id in input_ids], batch_first=True, padding_value=0)
+    padded_labels = pad_sequence([torch.tensor(label) for label in labels], batch_first=True, padding_value=-100)
+    
+    if max_len > max_length:
+        padded_inputs = padded_inputs[:, :1024]
+        padded_labels = padded_labels[:, :1024]
+
+    return padded_inputs, padded_labels
 
 class TextDataModule(LightningDataModule):
-    def __init__(self, data, tokenizer, batch_size:int=8, max_length:int=128, input_type:Optional[str]="text", train_test_split:float=0.8, seed:int=42):
+    def __init__(self, data, tokenizer, batch_size:int=8, max_length:int=1024, input_type:Optional[str]="text", train_test_split:float=0.8, seed:int=42):
         super().__init__()
         self.data = data
         self.tokenizer = tokenizer
@@ -36,7 +51,7 @@ class TextDataModule(LightningDataModule):
             self.text_train, 
             batch_size=self.batch_size, 
             shuffle=True, num_workers=0, 
-            collate_fn=lambda x: tuple(x_ for x_ in default_collate(x))
+            collate_fn=lambda x: collate_batch(x, max_length=self.max_length)
         )
     
     def val_dataloader(self):
@@ -44,7 +59,7 @@ class TextDataModule(LightningDataModule):
             self.text_val, 
             batch_size=self.batch_size, 
             shuffle=False, num_workers=0, 
-            collate_fn=lambda x: tuple(x_ for x_ in default_collate(x))
+            collate_fn=lambda x: collate_batch(x, max_length=self.max_length)
         )
     
     def predict_dataloader(self):
@@ -52,5 +67,5 @@ class TextDataModule(LightningDataModule):
             self.text_predict,
             batch_size=self.batch_size, 
             shuffle=False, num_workers=0, 
-            collate_fn=lambda x: tuple(x_ for x_ in default_collate(x))
+            collate_fn=lambda x: collate_batch(x, max_length=self.max_length)
         )
