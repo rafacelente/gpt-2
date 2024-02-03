@@ -54,7 +54,7 @@ class TextDataModule(LightningDataModule):
         return DataLoader(
             self.text_train, 
             batch_size=self.batch_size, 
-            shuffle=True, num_workers=0, 
+            shuffle=True, num_workers=7, 
             collate_fn=lambda x: collate_batch(x, max_length=self.max_length)
         )
     
@@ -62,7 +62,7 @@ class TextDataModule(LightningDataModule):
         return DataLoader(
             self.text_val, 
             batch_size=self.batch_size, 
-            shuffle=False, num_workers=0, 
+            shuffle=False, num_workers=7, 
             collate_fn=lambda x: collate_batch(x, max_length=self.max_length)
         )
     
