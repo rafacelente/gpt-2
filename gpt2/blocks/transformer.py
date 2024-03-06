@@ -13,13 +13,11 @@ class TransformerBlock(nn.Module):
 
     def forward(self, x):
         residual = x
-        attn_outputs = self.attn(x)
+        attn_outputs = self.attn(self.norm1(x))
         x = residual + attn_outputs
         residual = x
         x = self.norm2(x)
-        x = self.mlp(x) + residual
-
-        return x
+        return self.mlp(x) + residual
 
 class Transformer(nn.Module):
     def __init__(
