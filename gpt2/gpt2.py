@@ -1,6 +1,7 @@
 import tiktoken
 from gpt2.blocks import Transformer
 from gpt2.modules import GPT2Module, TextDataModule
+from gpt2.modules.data import ShakespeareDataset, TinyStrangeDataset
 import torch
 import torch.nn.functional as F
 import pytorch_lightning as pl
@@ -9,9 +10,9 @@ from typing import Literal, Optional
 class GPT2:
     @staticmethod
     def build(
-            data: str, 
-            model_size: Optional[str] = "gpt2", 
-            input_type: Optional[Literal["parquet", "text", "path"]]="parquet",
+            dataset: Literal["shakespeare", "tinystrange"], # TODO: Add more datasets
+            data_path: str, 
+            model_size: Optional[str] = "gpt2",
             max_length: Optional[int] = 1024,
             batch_size: Optional[int] = 8,
             train_test_split: Optional[float] = 0.8,
@@ -27,16 +28,16 @@ class GPT2:
         )
         module = GPT2Module(model, tokenizer)
 
-        if input_type == "path":
-            with open(data, 'r') as f:
-                data = f.read()
+        if dataset == "shakespeare":
+            dataset = ShakespeareDataset.from_file(data_path, tokenizer, max_length)
+        elif dataset == "tinystrange":
+            dataset = TinyStrangeDataset.from_parquet(data_path, tokenizer, max_length)
+        else:
+            raise ValueError(f"Invalid dataset {dataset}")
 
         datamodule = TextDataModule(
-                        data, 
-                        tokenizer, 
+                        dataset, 
                         batch_size=batch_size, 
-                        max_length=max_length, 
-                        input_type=input_type,
                         train_test_split=train_test_split, 
                         seed=42)
         return GPT2(module, datamodule)

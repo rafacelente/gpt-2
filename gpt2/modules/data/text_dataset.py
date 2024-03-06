@@ -2,7 +2,7 @@ from torch.utils.data import Dataset
 import torch
 from typing import Optional
 
-class TextDataset(Dataset):
+class ShakespeareDataset(Dataset):
     def __init__(self, entry: str, tokenizer: object, max_length: Optional[str]=1024):
         self.entry = entry
         self.inputs = []
@@ -17,37 +17,6 @@ class TextDataset(Dataset):
         dataset = cls(entry, tokenizer, max_length)
         dataset._prepare_text()
         return dataset
-    
-    @classmethod
-    def from_parquet(cls, file_path: str, tokenizer: object, max_length: int=1024):
-        import pandas as pd
-        dataset = cls(file_path, tokenizer, max_length)
-        print(f'Reading parquet file {file_path}...')
-        df = pd.read_parquet(file_path)
-
-        print('Tokenizing text...')
-        for text in df['text']:
-            text = '<|endoftext|>' + text
-            tokenized_text = tokenizer.encode(text, allowed_special={'<|endoftext|>'})
-            dataset._prepare_parquet(tokenized_text)
-
-        return dataset
-
-    def _prepare_parquet(self, tokenized_text):
-        tokenized_text_length = len(tokenized_text)
-        for i in range(0, tokenized_text_length, self.max_length):
-            if i + self.max_length > tokenized_text_length:
-                a = tokenized_text[i:tokenized_text_length]
-                b = tokenized_text[i + 1:tokenized_text_length]
-                # add end of token
-                b.append(self.tokenizer.eot_token)
-            else:
-                a = tokenized_text[i:i+self.max_length]
-                b = tokenized_text[i+1:i+self.max_length]
-                b.append(self.tokenizer.eot_token)
-            self.inputs.append(a)
-            self.labels.append(b)
-        
     
     def _prepare_text(self):
         tokenized_text = self.tokenizer.encode(self.entry)
@@ -67,3 +36,35 @@ class TextDataset(Dataset):
     
     def __getitem__(self, idx):
         return torch.tensor(self.inputs[idx]), torch.tensor(self.labels[idx])
+    
+
+
+
+class TinyStrangeDataset(Dataset):
+    def __init__(self, file_path:str,  tokenizer: object, max_length: Optional[str]=1024):
+        self.df = None
+        self.file_path = file_path
+        self.max_length = max_length
+        self.tokenizer = tokenizer
+    
+    @classmethod
+    def from_parquet(cls, file_path: str, tokenizer: object, max_length: int=1024):
+        import pandas as pd
+        dataset = cls(file_path, tokenizer, max_length)
+        print(f'Reading parquet file {file_path}...')
+        dataset.df = pd.read_parquet(file_path)
+        print('Tokenizing text...')
+        dataset.df["tokens"] = dataset.df["text"].apply(lambda x: tokenizer.encode(x, allowed_special={'<|endoftext|>'}))
+        dataset.df["len_tokens"] = dataset.df["tokens"].apply(lambda x: len(x))
+        return dataset
+
+    def __len__(self):
+        return len(self.df)
+    
+    def __getitem__(self, idx):
+        tokens = self.df.iloc[idx]["tokens"]
+        tokens = tokens[:self.max_length]
+        inputs = torch.tensor(tokens[:-1], dtype=torch.long)
+        labels = torch.tensor(tokens[1:], dtype=torch.long)
+
+        return inputs, labels
