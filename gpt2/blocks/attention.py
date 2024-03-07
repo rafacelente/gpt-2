@@ -3,6 +3,8 @@ from torch import nn
 from torch.nn import functional as F
 from typing import Optional, Tuple, List
 
+MAX_CONTEXT = 1024
+
 class SelfAttention(nn.Module):
     def __init__(self, dim, n_heads, dropout=0.1, device="cuda"):
         super().__init__()
@@ -12,6 +14,12 @@ class SelfAttention(nn.Module):
         self.n_heads = n_heads
         self.dim = dim # Embedding dimension
         self.head_dim = dim // n_heads
+
+        self.register_buffer(
+            "bias", 
+            torch.tril(torch.ones((MAX_CONTEXT, MAX_CONTEXT), dtype=torch.bool).view(1, 1, MAX_CONTEXT, MAX_CONTEXT)),
+            persistent=False
+        )
 
         # obs: we won't do cross attention here
 
@@ -36,12 +44,12 @@ class SelfAttention(nn.Module):
         query_len = q.shape[1]
         key_len = k.shape[1]
         # Implementing the mask
-        causal_mask = torch.tril(torch.ones((query_len, key_len), dtype=torch.bool, device=q.device))
+        #causal_mask = torch.tril(torch.ones((query_len, key_len), dtype=torch.bool, device=q.device))
+        causal_mask = self.bias[:, :, key_len-query_len : key_len, :key_len]
         mask_value = torch.finfo(w.dtype).min # represent -inf
         w = torch.where(causal_mask, w, mask_value)
 
-        w = F.softmax(w, dim=-1)
-        # TODO: implement dropout
+        w = self.attn_dropout(F.softmax(w, dim=-1))
 
         attn_output = torch.matmul(w, v.transpose(1, 2)).transpose(1, 2)
         return attn_output

@@ -37,7 +37,12 @@ class Transformer(nn.Module):
         self.h = nn.ModuleList([TransformerBlock(dim, n_heads, norm_eps, device=device) for _ in range(n_layers)])
         self.norm_f = nn.LayerNorm(dim, eps=norm_eps, device=device)
         self.lm_head = nn.Linear(dim, vocab_size, bias=False, device=device)
-
+        
+        # To save model parameters, GPT2 introduces a tie
+        # between the weights of the input embeddings and
+        # output embeddings. This because they act on the same
+        # vocabulary, and therefore, embedding space.
+        self.lm_head.weight = self.wte.weight
 
     def forward(self, x, labels=None):
         input_shape = x.shape
