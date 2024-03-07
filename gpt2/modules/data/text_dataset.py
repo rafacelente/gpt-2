@@ -48,15 +48,20 @@ class TinyStrangeDataset(Dataset):
         self.tokenizer = tokenizer
     
     @classmethod
-    def from_parquet(cls, file_path: str, tokenizer: object, max_length: int=1024):
+    def from_parquet(cls, file_path: str, tokenizer: object, max_length: int=1024, tokenized: bool=False):
         import pandas as pd
-        dataset = cls(file_path, tokenizer, max_length)
+        dataset = cls(file_path, tokenizer, max_length=max_length)
         print(f'Reading parquet file {file_path}...')
-        dataset.df = pd.read_parquet(file_path)
-        print('Tokenizing text...')
-        dataset.df["tokens"] = dataset.df["text"].apply(lambda x: tokenizer.encode(x, allowed_special={'<|endoftext|>'}))
-        dataset.df["len_tokens"] = dataset.df["tokens"].apply(lambda x: len(x))
+        df = pd.read_parquet(file_path)
+        if not tokenized:
+            print('Tokenizing text...')
+            dataset.df["tokens"] = dataset.df["text"].apply(lambda x: tokenizer.encode(x, allowed_special={'<|endoftext|>'}))
+            dataset.df["len_tokens"] = dataset.df["tokens"].apply(lambda x: len(x))
+        
+        assert "tokens" in dataset.df.columns, "Column 'tokens' not found in dataframe"
+        dataset.df = df
         return dataset
+    
 
     def __len__(self):
         return len(self.df)

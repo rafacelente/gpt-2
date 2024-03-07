@@ -8,14 +8,10 @@ from torch.utils.data import Dataset
 def collate_batch(batch, max_length=1024):
     input_ids, labels = zip(*batch)
 
-    max_len = max(len(x) for x in input_ids)
-    padded_inputs = pad_sequence(input_ids, batch_first=True, padding_value=0)
-    padded_labels = pad_sequence(labels, batch_first=True, padding_value=-100)
+    max_len = min(max(len(x) for x in input_ids), max_length)
+    padded_inputs = pad_sequence(input_ids, batch_first=True, padding_value=0, max_len=max_len)
+    padded_labels = pad_sequence(labels, batch_first=True, padding_value=-100, max_len=max_len)
     
-    if max_len > max_length:
-        padded_inputs = padded_inputs[:, :max_length]
-        padded_labels = padded_labels[:, :max_length]
-
     return padded_inputs, padded_labels
 
 class TextDataModule(LightningDataModule):
@@ -50,7 +46,8 @@ class TextDataModule(LightningDataModule):
         return DataLoader(
             self.dataset_train, 
             batch_size=self.batch_size, 
-            shuffle=True, num_workers=7, 
+            shuffle=True, num_workers=7,
+            pin_memory=True, 
             collate_fn=lambda x: collate_batch(x, max_length=self.dataset.max_length)
         )
     
@@ -58,7 +55,8 @@ class TextDataModule(LightningDataModule):
         return DataLoader(
             self.dataset_val, 
             batch_size=self.batch_size, 
-            shuffle=False, num_workers=7, 
+            shuffle=False, num_workers=7,
+            pin_memory=True, 
             collate_fn=lambda x: collate_batch(x, max_length=self.dataset.max_length)
         )
     
