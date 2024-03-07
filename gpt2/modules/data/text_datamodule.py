@@ -9,10 +9,10 @@ def collate_batch(batch, max_length=1024):
     input_ids, labels = zip(*batch)
 
     max_len = min(max(len(x) for x in input_ids), max_length)
-    padded_inputs = pad_sequence(input_ids, batch_first=True, padding_value=0, max_len=max_len)
-    padded_labels = pad_sequence(labels, batch_first=True, padding_value=-100, max_len=max_len)
+    padded_inputs = pad_sequence(input_ids, batch_first=True, padding_value=0)
+    padded_labels = pad_sequence(labels, batch_first=True, padding_value=-100)
     
-    return padded_inputs, padded_labels
+    return padded_inputs[:max_len], padded_labels[:max_len]
 
 class TextDataModule(LightningDataModule):
     def __init__(self,

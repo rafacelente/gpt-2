@@ -55,10 +55,10 @@ class TinyStrangeDataset(Dataset):
         df = pd.read_parquet(file_path)
         if not tokenized:
             print('Tokenizing text...')
-            dataset.df["tokens"] = dataset.df["text"].apply(lambda x: tokenizer.encode(x, allowed_special={'<|endoftext|>'}))
-            dataset.df["len_tokens"] = dataset.df["tokens"].apply(lambda x: len(x))
+            df["tokens"] = df["text"].apply(lambda x: tokenizer.encode(x, allowed_special={'<|endoftext|>'}))
+            df["len_tokens"] = df["tokens"].apply(lambda x: len(x))
         
-        assert "tokens" in dataset.df.columns, "Column 'tokens' not found in dataframe"
+        assert "tokens" in df.columns, "Column 'tokens' not found in dataframe"
         dataset.df = df
         return dataset
     
