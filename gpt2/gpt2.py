@@ -16,6 +16,8 @@ class GPT2:
             max_length: Optional[int] = 1024,
             batch_size: Optional[int] = 8,
             train_test_split: Optional[float] = 0.8,
+            from_pretrained: Optional[bool] = False,
+            checkpoint_path: Optional[str] = None
         ):
         tokenizer = tiktoken.get_encoding(model_size)
         # TODO: Change model based on model_size
@@ -26,23 +28,29 @@ class GPT2:
             n_layers=12,
             max_seq_len=1024,
         )
-        module = GPT2Module(model, tokenizer)
-
+        if from_pretrained:
+            assert checkpoint_path is not None, "checkpoint_path must be provided if from_pretrained is True"
+            module = GPT2Module.load_from_checkpoint(checkpoint_path, model=model, tokenizer=tokenizer)
+        else:
+            module = GPT2Module(model, tokenizer)
+        
         if dataset == "shakespeare":
             dataset = ShakespeareDataset.from_file(data_path, tokenizer, max_length)
         elif dataset == "tinystrange":
             dataset = TinyStrangeDataset.from_parquet(data_path, tokenizer, max_length)
         else:
             raise ValueError(f"Invalid dataset {dataset}")
-
+        
         datamodule = TextDataModule(
                         dataset, 
                         batch_size=batch_size, 
                         train_test_split=train_test_split, 
                         seed=42)
         return GPT2(module, datamodule)
-
     
+    def load_checkpoint(self, path: str):
+        self.module = GPT2Module.load_from_checkpoint(path, model=self.module.model, tokenizer=self.module.tokenizer)
+
     def __init__(self, module: GPT2Module, datamodule: TextDataModule):
         self.module = module
         self.datamodule = datamodule
