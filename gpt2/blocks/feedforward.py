@@ -10,6 +10,6 @@ class FeedForward(torch.nn.Module):
     def forward(self, x):
         x = self.c_fc(x)
         x = torch.nn.functional.gelu(x)
-        x = self.dropout(x)
         x = self.c_proj(x)
+        x = self.dropout(x)
         return x

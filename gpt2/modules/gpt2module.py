@@ -31,4 +31,4 @@ class GPT2Module(pl.LightningModule):
         return logits
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.model.parameters(), lr=1e-4)
+        return torch.optim.AdamW(self.model.parameters(), lr=1e-4, weight_decay=0.1)        
