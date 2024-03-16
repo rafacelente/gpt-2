@@ -1,21 +1,16 @@
 import tiktoken
 from gpt2.blocks import Transformer
 from gpt2.modules import GPT2Module, TextDataModule
-from gpt2.modules.data import ShakespeareDataset, TinyStrangeDataset
+from gpt2.modules.data import ShakespeareDataset, TinyStrangeDataset, WikiTextDataset, GepetoDataset
 import torch
 import torch.nn.functional as F
 import pytorch_lightning as pl
-from typing import Literal, Optional
-
+from typing import Literal, Optional, List, Union
 class GPT2:
     @staticmethod
     def build(
-            dataset: Literal["shakespeare", "tinystrange"], # TODO: Add more datasets
-            data_path: str, 
             model_size: Optional[str] = "gpt2",
             max_length: Optional[int] = 1024,
-            batch_size: Optional[int] = 8,
-            train_test_split: Optional[float] = 0.8,
             from_pretrained: Optional[bool] = False,
             checkpoint_path: Optional[str] = None
         ):
@@ -26,27 +21,14 @@ class GPT2:
             n_heads=12,
             vocab_size=50257,
             n_layers=12,
-            max_seq_len=1024,
+            max_seq_len=max_length,
         )
         if from_pretrained:
             assert checkpoint_path is not None, "checkpoint_path must be provided if from_pretrained is True"
             module = GPT2Module.load_from_checkpoint(checkpoint_path, model=model, tokenizer=tokenizer)
         else:
             module = GPT2Module(model, tokenizer)
-        
-        if dataset == "shakespeare":
-            dataset = ShakespeareDataset.from_file(data_path, tokenizer, max_length)
-        elif dataset == "tinystrange":
-            dataset = TinyStrangeDataset.from_parquet(data_path, tokenizer, max_length)
-        else:
-            raise ValueError(f"Invalid dataset {dataset}")
-        
-        datamodule = TextDataModule(
-                        dataset, 
-                        batch_size=batch_size, 
-                        train_test_split=train_test_split, 
-                        seed=42)
-        return GPT2(module, datamodule)
+        return GPT2(module, None)
     
     def load_checkpoint(self, path: str):
         self.module = GPT2Module.load_from_checkpoint(path, model=self.module.model, tokenizer=self.module.tokenizer)
@@ -56,11 +38,19 @@ class GPT2:
         self.datamodule = datamodule
         self.trainer = None
 
-    def train(self, max_epochs: int = 1, devices: int = 1, accelerator: str = "gpu"):
+    def train(
+            self, 
+            max_epochs: int = 1, 
+            devices: int = 1, 
+            accelerator: str = "gpu", 
+            logger: Optional[pl.loggers.Logger]=None,
+            ):
+        assert self.datamodule is not None, "datamodule must be loaded before training"
         self.trainer = pl.Trainer(
             accelerator=accelerator,
             devices=devices,
             max_epochs=max_epochs,
+            logger=logger,
         )
         self.trainer.fit(self.module, self.datamodule)
         
@@ -100,3 +90,29 @@ class GPT2:
             result = generated[0].tolist()
             text = self.module.tokenizer.decode(result[prompt_len:])
         return text
+    
+    def load_datamodule(
+            self,
+            dataset: Literal["shakespeare", "tinystrange", "wikitext", "gepeto"], # TODO: Add more datasets,
+            data_path: Union[str, List[str]],
+            tokenizer: object,
+            batch_size: Optional[int] = 8,
+            train_test_split: Optional[float] = 0.8,
+            max_length: Optional[int] = 1024,
+        ):
+        if dataset == "shakespeare":
+            dataset = ShakespeareDataset.from_file(data_path, tokenizer, max_length)
+        elif dataset == "tinystrange":
+            dataset = TinyStrangeDataset.from_parquet(data_path, tokenizer, max_length)
+        elif dataset == "wikitext":
+            dataset = WikiTextDataset.from_parquet(data_path, tokenizer, max_length)
+        elif dataset == "gepeto":
+            dataset = 
+        else:
+            raise ValueError(f"Invalid dataset {dataset}")
+        
+        self.datamodule = TextDataModule(
+                        dataset, 
+                        batch_size=batch_size, 
+                        train_test_split=train_test_split, 
+                        seed=42)

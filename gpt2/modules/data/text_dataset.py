@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
 import torch
-from typing import Optional
+from typing import Optional, List, Union
+import pandas as pd
 
 class ShakespeareDataset(Dataset):
     def __init__(self, entry: str, tokenizer: object, max_length: Optional[str]=1024):
@@ -38,8 +39,6 @@ class ShakespeareDataset(Dataset):
         return torch.tensor(self.inputs[idx]), torch.tensor(self.labels[idx])
     
 
-
-
 class TinyStrangeDataset(Dataset):
     def __init__(self, file_path:str,  tokenizer: object, max_length: Optional[str]=1024):
         self.df = None
@@ -49,7 +48,6 @@ class TinyStrangeDataset(Dataset):
     
     @classmethod
     def from_parquet(cls, file_path: str, tokenizer: object, max_length: int=1024, tokenized: bool=False):
-        import pandas as pd
         dataset = cls(file_path, tokenizer, max_length=max_length)
         print(f'Reading parquet file {file_path}...')
         df = pd.read_parquet(file_path)
@@ -62,6 +60,77 @@ class TinyStrangeDataset(Dataset):
         dataset.df = df
         return dataset
     
+
+    def __len__(self):
+        return len(self.df)
+    
+    def __getitem__(self, idx):
+        tokens = self.df.iloc[idx]["tokens"]
+        tokens = tokens[:self.max_length]
+        inputs = torch.tensor(tokens[:-1], dtype=torch.long)
+        labels = torch.tensor(tokens[1:], dtype=torch.long)
+
+        return inputs, labels
+    
+class WikiTextDataset(Dataset):
+    def __init__(self, file_path:str,  tokenizer: object, max_length: Optional[str]=1024):
+        self.df = None
+        self.file_path = file_path
+        self.max_length = max_length
+        self.tokenizer = tokenizer
+    
+    @classmethod
+    def from_parquet(cls, file_path: str, tokenizer: object, max_length: int=1024, tokenized: bool=False):
+        dataset = cls(file_path, tokenizer, max_length=max_length)
+        print(f'Reading parquet file {file_path}...')
+        df = pd.read_parquet(file_path)
+        if not tokenized:
+            print('Tokenizing text...')
+            df["tokens"] = df["text"].apply(lambda x: tokenizer.encode(x, allowed_special={'<|endoftext|>'}))
+        assert "tokens" in df.columns, "Column 'tokens' not found in dataframe"
+        df = df[df["len_tokens"] > 50]
+        dataset.df = df
+        return dataset
+    
+    def __len__(self):
+        return len(self.df)
+    
+    def __getitem__(self, idx):
+        tokens = self.df.iloc[idx]["tokens"]
+        tokens = tokens[:self.max_length]
+        inputs = torch.tensor(tokens[:-1], dtype=torch.long)
+        labels = torch.tensor(tokens[1:], dtype=torch.long)
+
+        return inputs, labels
+    
+class GepetoDataset(Dataset):
+    """
+    Generic dataset class that can be used to load any parquet file or list of parquet files.
+    """
+    def __init__(self, 
+                file_paths: Union[str, List[str]],
+                tokenizer: object, 
+                max_length: Optional[str]=1024):
+        self.df = None
+        self.file_paths = file_paths
+        self.max_length = max_length
+        self.tokenizer = tokenizer
+
+        self._setup()
+        self._tokenize()
+
+    def _setup(self):
+        for file_path in self.file_paths:
+            assert file_path.endswith(".parquet"), "File path must be a parquet file"
+            df = pd.read_parquet(file_path)
+            assert "text" in self.df.columns, "Column 'text' not found in dataframe"
+            df = df[["text"]]
+            self.df = df if self.df is None else pd.concat([self.df, df])
+        self.df.reset_index(drop=True, inplace=True)
+
+    def _tokenize(self):
+        print('Tokenizing text...')
+        self.df["tokens"] = self.df["text"].apply(lambda x: self.tokenizer.encode(x, allowed_special={'<|endoftext|>'}))
 
     def __len__(self):
         return len(self.df)
