@@ -31,7 +31,7 @@ class GPT2:
         return GPT2(module, None, tokenizer=tokenizer)
     
     def load_checkpoint(self, path: str):
-        self.module = GPT2Module.load_from_checkpoint(path, model=self.module.model, tokenizer=self.tokenizer)
+        self.module = GPT2Module.load_from_checkpoint(path, model=self.module.model)
 
     def __init__(self, module: GPT2Module, datamodule: TextDataModule, tokenizer: Optional[object] = None):
         self.module = module
