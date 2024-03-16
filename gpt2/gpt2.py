@@ -107,7 +107,7 @@ class GPT2:
         elif dataset == "wikitext":
             dataset = WikiTextDataset.from_parquet(data_path, tokenizer, max_length)
         elif dataset == "gepeto":
-            dataset = 
+            dataset = GepetoDataset(data_path, tokenizer, max_length)
         else:
             raise ValueError(f"Invalid dataset {dataset}")
         

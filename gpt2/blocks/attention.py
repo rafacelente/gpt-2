@@ -11,6 +11,7 @@ class SelfAttention(nn.Module):
         self.c_attn = nn.Linear(dim, dim*3, bias=True, device=device) # W_q, W_k, W_v, that's why dim*3
         self.c_proj = nn.Linear(dim, dim, bias=True, device=device)
         self.attn_dropout = nn.Dropout(dropout)
+        self.resid_dropout  = nn.Dropout(dropout)
         self.n_heads = n_heads
         self.dim = dim # Embedding dimension
         self.head_dim = dim // n_heads
@@ -102,6 +103,6 @@ class SelfAttention(nn.Module):
         attn_output = self._attn(queries, keys, values, mask)
         attn_output = self._merge_heads(attn_output, self.n_heads, self.head_dim)
         attn_output = self.c_proj(attn_output)
-        # TODO: implement dropout
+        attn_output = self.resid_dropout(attn_output)
 
         return attn_output
