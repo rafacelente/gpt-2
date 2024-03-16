@@ -27,16 +27,17 @@ class GPT2:
             assert checkpoint_path is not None, "checkpoint_path must be provided if from_pretrained is True"
             module = GPT2Module.load_from_checkpoint(checkpoint_path, model=model, tokenizer=tokenizer)
         else:
-            module = GPT2Module(model, tokenizer)
-        return GPT2(module, None)
+            module = GPT2Module(model)
+        return GPT2(module, None, tokenizer=tokenizer)
     
     def load_checkpoint(self, path: str):
         self.module = GPT2Module.load_from_checkpoint(path, model=self.module.model, tokenizer=self.module.tokenizer)
 
-    def __init__(self, module: GPT2Module, datamodule: TextDataModule):
+    def __init__(self, module: GPT2Module, datamodule: TextDataModule, tokenizer: Optional[object] = None):
         self.module = module
         self.datamodule = datamodule
         self.trainer = None
+        self.tokenizer = tokenizer
 
     def train(
             self, 
@@ -66,7 +67,7 @@ class GPT2:
             num_return_sequences=1, 
             batch_size=1,
             device="cuda"):
-        prompt_tokens = self.module.tokenizer.encode(prompt)
+        prompt_tokens = self.tokenizer.encode(prompt)
         self.module.model = self.module.model.to(device)
         for _ in range(num_return_sequences):
             generated = torch.tensor([prompt_tokens])
@@ -88,26 +89,25 @@ class GPT2:
                     generated = torch.cat((generated, next_token), dim=1)
 
             result = generated[0].tolist()
-            text = self.module.tokenizer.decode(result[prompt_len:])
+            text = self.module.decode(result[prompt_len:])
         return text
     
     def load_datamodule(
             self,
             dataset: Literal["shakespeare", "tinystrange", "wikitext", "gepeto"], # TODO: Add more datasets,
             data_path: Union[str, List[str]],
-            tokenizer: object,
             batch_size: Optional[int] = 8,
             train_test_split: Optional[float] = 0.8,
             max_length: Optional[int] = 1024,
         ):
         if dataset == "shakespeare":
-            dataset = ShakespeareDataset.from_file(data_path, tokenizer, max_length)
+            dataset = ShakespeareDataset.from_file(data_path, self.tokenizer, max_length)
         elif dataset == "tinystrange":
-            dataset = TinyStrangeDataset.from_parquet(data_path, tokenizer, max_length)
+            dataset = TinyStrangeDataset.from_parquet(data_path, self.tokenizer, max_length)
         elif dataset == "wikitext":
-            dataset = WikiTextDataset.from_parquet(data_path, tokenizer, max_length)
+            dataset = WikiTextDataset.from_parquet(data_path, self.tokenizer, max_length)
         elif dataset == "gepeto":
-            dataset = GepetoDataset(data_path, tokenizer, max_length)
+            dataset = GepetoDataset(data_path, self.tokenizer, max_length)
         else:
             raise ValueError(f"Invalid dataset {dataset}")
         

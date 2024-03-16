@@ -5,10 +5,9 @@ import torch.nn.functional as F
 import pytorch_lightning as pl
 
 class GPT2Module(pl.LightningModule):
-    def __init__(self, model:Transformer, tokenizer:object):
+    def __init__(self, model:Transformer):
         super().__init__()
         self.model = model
-        self.tokenizer = tokenizer
     
     def forward(self, x):
         return self.model(x)
