@@ -47,7 +47,7 @@ class TextDataModule(LightningDataModule):
             self.dataset_train, 
             batch_size=self.batch_size, 
             shuffle=True, num_workers=7,
-            pin_memory=True, 
+            #pin_memory=True, 
             collate_fn=lambda x: collate_batch(x, max_length=self.dataset.max_length)
         )
     
@@ -56,7 +56,7 @@ class TextDataModule(LightningDataModule):
             self.dataset_val, 
             batch_size=self.batch_size, 
             shuffle=False, num_workers=7,
-            pin_memory=True, 
+            #pin_memory=True, 
             collate_fn=lambda x: collate_batch(x, max_length=self.dataset.max_length)
         )
     

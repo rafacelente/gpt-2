@@ -117,7 +117,7 @@ class GepetoDataset(Dataset):
         self.tokenizer = tokenizer
 
         self._setup()
-        self._tokenize()
+        self._tokenize(prune_dataset=True)
 
     def _setup(self):
         for file_path in self.file_paths:
@@ -128,10 +128,13 @@ class GepetoDataset(Dataset):
             self.df = df if self.df is None else pd.concat([self.df, df])
         self.df.reset_index(drop=True, inplace=True)
 
-    def _tokenize(self):
+    def _tokenize(self, prune_dataset=True):
         print('Tokenizing text...')
         self.df["tokens"] = self.df["text"].apply(lambda x: self.tokenizer.encode(x, allowed_special={'<|endoftext|>'}))
-
+        self.df["len_tokens"] = self.df["tokens"].apply(lambda x: len(x))
+        if prune_dataset:
+            self.df = self.df[self.df["len_tokens"] > 50]
+        
     def __len__(self):
         return len(self.df)
     
