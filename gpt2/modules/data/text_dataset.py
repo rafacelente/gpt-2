@@ -123,7 +123,7 @@ class GepetoDataset(Dataset):
         for file_path in self.file_paths:
             assert file_path.endswith(".parquet"), "File path must be a parquet file"
             df = pd.read_parquet(file_path)
-            assert "text" in self.df.columns, "Column 'text' not found in dataframe"
+            assert "text" in df.columns, "Column 'text' not found in dataframe"
             df = df[["text"]]
             self.df = df if self.df is None else pd.concat([self.df, df])
         self.df.reset_index(drop=True, inplace=True)
