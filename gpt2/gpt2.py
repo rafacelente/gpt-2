@@ -31,7 +31,7 @@ class GPT2:
         return GPT2(module, None, tokenizer=tokenizer)
     
     def load_checkpoint(self, path: str):
-        self.module = GPT2Module.load_from_checkpoint(path, model=self.module.model, tokenizer=self.module.tokenizer)
+        self.module = GPT2Module.load_from_checkpoint(path, model=self.module.model, tokenizer=self.tokenizer)
 
     def __init__(self, module: GPT2Module, datamodule: TextDataModule, tokenizer: Optional[object] = None):
         self.module = module
@@ -89,7 +89,7 @@ class GPT2:
                     generated = torch.cat((generated, next_token), dim=1)
 
             result = generated[0].tolist()
-            text = self.module.decode(result[prompt_len:])
+            text = self.tokenizer.decode(result[prompt_len:])
         return text
     
     def load_datamodule(
