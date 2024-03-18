@@ -88,7 +88,7 @@ class GPT2:
                     outputs = self.module.model(generated)
                     next_token_logits = outputs[0][:, -1, :]
                     for token in set(generated[0].tolist()):
-                        next_token_logits[token] /= repetition_penalty
+                        next_token_logits[:, token] /= repetition_penalty
                     next_token_logits = next_token_logits / temperature
                     filtered_logits = top_k_filtering(next_token_logits, top_k=top_k)
                     if do_sample:
