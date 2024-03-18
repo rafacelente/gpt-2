@@ -69,6 +69,15 @@ class GPT2:
             device="cuda"):
         prompt_tokens = self.tokenizer.encode(prompt)
         self.module.model = self.module.model.to(device)
+
+        def top_k_filtering(logits, top_k=0, filter_value=-float('Inf')):
+            top_k = min(top_k, logits.size(-1))
+            if top_k > 0:
+                indices_to_remove = logits < torch.topk(logits, top_k)[0][..., -1, None]
+                logits[indices_to_remove] = filter_value
+
+            return logits
+
         for _ in range(num_return_sequences):
             generated = torch.tensor([prompt_tokens])
             prompt_len = len(prompt_tokens)
@@ -78,18 +87,18 @@ class GPT2:
                 with torch.no_grad():
                     outputs = self.module.model(generated)
                     next_token_logits = outputs[0][:, -1, :]
-                    # for token in set(generated[0].tolist()):
-                    #     next_token_logits[token] /= repetition_penalty
-                    #next_token_logits = next_token_logits / temperature
-                    #filtered_logits = top_k_top_p_filtering(next_token_logits, top_k=top_k, top_p=top_p)
+                    for token in set(generated[0].tolist()):
+                        next_token_logits[token] /= repetition_penalty
+                    next_token_logits = next_token_logits / temperature
+                    filtered_logits = top_k_filtering(next_token_logits, top_k=top_k)
                     if do_sample:
-                        next_token = torch.multinomial(F.softmax(next_token_logits, dim=-1), num_samples=1)
-                    # else:
-                    #     next_token = torch.argmax(filtered_logits, dim=-1)
-                    generated = torch.cat((generated, next_token), dim=1)
+                        next_token = torch.multinomial(F.softmax(filtered_logits, dim=-1), num_samples=1)
+                    else:
+                        next_token = torch.argmax(F.softmax(filtered_logits, dim=-1), dim=-1, keepdims=True)
+                    generated = torch.cat((generated, next_token), dim=-1)
 
             result = generated[0].tolist()
-            text = self.tokenizer.decode(result[prompt_len:])
+            text = self.tokenizer.decode(result)
         return text
     
     def load_datamodule(
