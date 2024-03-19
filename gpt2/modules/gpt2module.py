@@ -37,10 +37,24 @@ class GPT2Module(pl.LightningModule):
         hf_model = GPT2Model.from_pretrained(model_name)
         hf_state_dict = hf_model.state_dict()
 
+        key_mapping = {
+            'ln_1.': 'norm1.',
+            'ln_2': 'norm2',
+            'ln_f': 'norm_f',
+        }
+
+        for key, value in hf_state_dict.items():
+            new_key = key
+            for k, v in key_mapping.items():
+                new_key = new_key.replace(k, v)
+                break
+            hf_state_dict[new_key] = value
+            del hf_state_dict[key]
+        
         for key in list(hf_state_dict.keys()):
             if "c_attn.weight" in key:
                 hf_state_dict[key] = hf_state_dict[key].T
-            elif "c_proj.weight" in key:
+            elif "mlp.c_fc.weight" in key:
                 hf_state_dict[key] = hf_state_dict[key].T
         
         self.model.load_state_dict(hf_state_dict)
