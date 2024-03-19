@@ -6,13 +6,14 @@ import torch
 import torch.nn.functional as F
 import pytorch_lightning as pl
 from typing import Literal, Optional, List, Union
+
 class GPT2:
     @staticmethod
     def build(
             model_size: Optional[str] = "gpt2",
             max_length: Optional[int] = 1024,
             from_pretrained: Optional[bool] = False,
-            checkpoint_path: Optional[str] = None
+            from_checkpoint: Optional[str] = None
         ):
         tokenizer = tiktoken.get_encoding(model_size)
         # TODO: Change model based on model_size
@@ -23,21 +24,26 @@ class GPT2:
             n_layers=12,
             max_seq_len=max_length,
         )
-        if from_pretrained:
-            assert checkpoint_path is not None, "checkpoint_path must be provided if from_pretrained is True"
-            module = GPT2Module.load_from_checkpoint(checkpoint_path, model=model, tokenizer=tokenizer)
+        if from_checkpoint is not None:
+            module = GPT2Module.load_from_checkpoint(from_checkpoint, model=model, tokenizer=tokenizer)
+        elif from_pretrained:
+            module = GPT2Module(model)
+            module.load_weights_from_hf(model_size)
         else:
             module = GPT2Module(model)
         return GPT2(module, None, tokenizer=tokenizer)
     
-    def load_checkpoint(self, path: str):
-        self.module = GPT2Module.load_from_checkpoint(path, model=self.module.model)
-
     def __init__(self, module: GPT2Module, datamodule: TextDataModule, tokenizer: Optional[object] = None):
         self.module = module
         self.datamodule = datamodule
         self.trainer = None
         self.tokenizer = tokenizer
+
+    def load_checkpoint(self, path: str):
+        self.module = GPT2Module.load_from_checkpoint(path, model=self.module.model)
+
+    def load_weights_from_hf(self, model_name: str):
+        self.module.load_weights_from_hf(model_name)
 
     def train(
             self, 

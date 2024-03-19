@@ -31,3 +31,16 @@ class GPT2Module(pl.LightningModule):
 
     def configure_optimizers(self):
         return torch.optim.AdamW(self.model.parameters(), lr=1e-4, weight_decay=0.1)        
+    
+    def load_weights_from_hf(self, model_name: str):
+        from transformers import GPT2Model
+        hf_model = GPT2Model.from_pretrained(model_name)
+        hf_state_dict = hf_model.state_dict()
+
+        for key in list(hf_state_dict.keys()):
+            if "c_attn.weight" in key:
+                hf_state_dict[key] = hf_state_dict[key].T
+            elif "c_proj.weight" in key:
+                hf_state_dict[key] = hf_state_dict[key].T
+        
+        self.model.load_state_dict(hf_state_dict)
