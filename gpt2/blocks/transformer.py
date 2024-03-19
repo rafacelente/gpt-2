@@ -6,12 +6,12 @@ from gpt2.blocks import SelfAttention, FeedForward
 class TransformerBlock(nn.Module):
     def __init__(self, dim, n_heads, norm_eps=1e-5, device="cuda"):
         super().__init__()
-        self.attn = SelfAttention(dim, n_heads, device=device)
         self.norm1 = nn.LayerNorm(dim, eps=norm_eps, device=device)
-        self.mlp = FeedForward(dim, dim*4, device=device)
+        self.attn = SelfAttention(dim, n_heads, device=device)
         self.norm2 = nn.LayerNorm(dim, eps=norm_eps, device=device)
+        self.mlp = FeedForward(dim, dim*4, device=device)
 
-    def forward(self, x):
+    def forward(self, x): # x: (bsz, seqlen, dim)
         residual = x
         attn_outputs = self.attn(self.norm1(x))
         x = residual + attn_outputs
@@ -27,17 +27,19 @@ class Transformer(nn.Module):
             norm_eps=1e-5, 
             vocab_size=50257, 
             n_layers=12, 
-            max_seq_len=1024, 
+            max_seq_len=1024,
+            dropout=0.1, 
             device="cuda"):
         super().__init__()
         self.embed_dim = dim
         self.vocab_size = vocab_size
         self.wte = nn.Embedding(vocab_size, dim, device=device)
         self.wpe = nn.Embedding(max_seq_len, dim, device=device)
+        self.dropout = nn.Dropout(dropout)
         self.h = nn.ModuleList([TransformerBlock(dim, n_heads, norm_eps, device=device) for _ in range(n_layers)])
         self.norm_f = nn.LayerNorm(dim, eps=norm_eps, device=device)
         self.lm_head = nn.Linear(dim, vocab_size, bias=False, device=device)
-        
+
         # To save model parameters, GPT2 introduces a tie
         # between the weights of the input embeddings and
         # output embeddings. This because they act on the same
@@ -54,6 +56,7 @@ class Transformer(nn.Module):
         x = self.norm_f(x)
         for i in range(len(self.h)):
             x = self.h[i](x)
+        x = self.dropout(x)
         logits = self.lm_head(x)
 
         loss = None
