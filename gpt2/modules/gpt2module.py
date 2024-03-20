@@ -1,7 +1,5 @@
-# import tiktoken
 from gpt2.blocks import Transformer
 import torch
-import torch.nn.functional as F
 import pytorch_lightning as pl
 
 class GPT2Module(pl.LightningModule):
@@ -32,7 +30,7 @@ class GPT2Module(pl.LightningModule):
     def configure_optimizers(self):
         return torch.optim.AdamW(self.model.parameters(), lr=1e-4, weight_decay=0.1)        
     
-    def load_weights_from_hf(self, model_name: str):
+    def load_weights_from_hf(self, model_name: str="gpt2"):
         from transformers import GPT2Model
         hf_model = GPT2Model.from_pretrained(model_name)
         old_hf_state_dict = hf_model.state_dict()
