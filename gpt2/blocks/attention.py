@@ -59,14 +59,30 @@ class SelfAttention(nn.Module):
         return attn_output
 
     def _merge_heads(self, x: torch.Tensor, num_heads, head_dim) -> torch.Tensor:
-        # x: (bsz, seqlen, n_heads, head_dim)
-        # return: (bsz, seqlen, dim)
+        """
+        Merge the attention heads back into a single tensor.
+
+        Args:
+            x (torch.Tensor): The input tensor of shape (bsz, seqlen, n_heads, head_dim).
+            num_heads (int): The number of attention heads.
+            head_dim (int): The dimension of each attention head.
+
+        Returns:
+            torch.Tensor: The merged tensor of shape (bsz, seqlen, dim).
+        """
         return x.contiguous().view(x.shape[0], x.shape[1], num_heads * head_dim)
     
     def _split_heads(self, x: torch.Tensor) -> torch.Tensor:
-        # x: (bsz, seqlen, dim)
-        # return: (bsz, seqlen, n_heads, head_dim)
-        return x.view(x.shape[0], x.shape[1], self.n_heads, self.head_dim)
+            """
+            Splits the input tensor into multiple heads.
+
+            Args:
+                x (torch.Tensor): The input tensor of shape (bsz, seqlen, dim).
+
+            Returns:
+                torch.Tensor: The tensor after splitting into multiple heads of shape (bsz, seqlen, n_heads, head_dim).
+            """
+            return x.view(x.shape[0], x.shape[1], self.n_heads, self.head_dim)
 
     # def _update_cache(cache_kv, keys, values, kv_len):
     #     # cache_kv: (2, bsz, MAX_CONTEXT, n_heads, head_dim)
