@@ -13,7 +13,7 @@ class SelfAttention(nn.Module):
         self.attn_dropout = nn.Dropout(dropout)
         self.resid_dropout  = nn.Dropout(dropout)
         self.n_heads = n_heads
-        self.dim = dim # Embedding dimension
+        self.dim = dim
         self.head_dim = dim // n_heads
 
         self.register_buffer(
@@ -22,15 +22,18 @@ class SelfAttention(nn.Module):
             persistent=False
         )
 
-        # obs: we won't do cross attention here
+    def _attn(self, q, k, v):
+        """
+        Compute the scaled dot-product attention between query (q), key (k), and value (v) tensors.
 
-    def _attn(self, q, k, v, mask=None):
-        # q: (bsz, seqlen, n_heads, head_dim)
-        # k: (bsz, seqlen, n_heads, head_dim)
-        # v: (bsz, seqlen, n_heads, head_dim)
-        # mask: (bsz, seqlen, seqlen)
-        # return: (bsz, seqlen, n_heads, head_dim), (bsz, seqlen, seqlen)
+        Args:
+            q: Tensor of shape (bsz, seqlen, n_heads, head_dim) representing the query.
+            k: Tensor of shape (bsz, seqlen, n_heads, head_dim) representing the key.
+            v: Tensor of shape (bsz, seqlen, n_heads, head_dim) representing the value.
 
+        Returns:
+            attn_output: Tensor of shape (bsz, seqlen, n_heads, head_dim) representing the attention output.
+        """
         
         # We want to compute the attention weights for each token in the sequence
         # Therefore, the attention weights will be of shape (bsz, n_heads, seqlen, seqlen)
@@ -44,10 +47,10 @@ class SelfAttention(nn.Module):
 
         query_len = q.shape[1]
         key_len = k.shape[1]
+
         # Implementing the mask
-        #causal_mask = torch.tril(torch.ones((query_len, key_len), dtype=torch.bool, device=q.device))
         causal_mask = self.bias[:, :, key_len-query_len : key_len, :key_len]
-        mask_value = torch.finfo(w.dtype).min # represent -inf
+        mask_value = torch.finfo(w.dtype).min # represents -inf
         w = torch.where(causal_mask, w, mask_value)
 
         w = self.attn_dropout(F.softmax(w, dim=-1))
