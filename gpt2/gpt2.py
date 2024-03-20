@@ -25,7 +25,7 @@ class GPT2:
             max_seq_len=max_length,
         )
         if from_checkpoint is not None:
-            module = GPT2Module.load_from_checkpoint(from_checkpoint, model=model, tokenizer=tokenizer)
+            module = GPT2Module.load_from_checkpoint(from_checkpoint, model=model)
         elif from_pretrained:
             module = GPT2Module(model)
             module.load_weights_from_hf(model_size)
@@ -43,6 +43,7 @@ class GPT2:
         self.module = GPT2Module.load_from_checkpoint(path, model=self.module.model)
 
     def load_weights_from_hf(self, model_name: str):
+        assert self.module is not None, "module must be loaded before loading weights"
         self.module.load_weights_from_hf(model_name)
 
     def train(
@@ -75,6 +76,7 @@ class GPT2:
             device="cuda"):
         prompt_tokens = self.tokenizer.encode(prompt)
         self.module.model = self.module.model.to(device)
+        self.module.model.eval()
 
         def top_k_filtering(logits, top_k=0, filter_value=-float('Inf')):
             top_k = min(top_k, logits.size(-1))
@@ -86,7 +88,6 @@ class GPT2:
 
         for _ in range(num_return_sequences):
             generated = torch.tensor([prompt_tokens])
-            prompt_len = len(prompt_tokens)
             generated = generated.to(device)
 
             for _ in range(max_len):
