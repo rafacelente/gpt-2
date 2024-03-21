@@ -6,7 +6,7 @@ GPT-2 model built and trained from scratch in pure Pytorch.
 
 #### Inference
 
-```
+```python
 from gpt2 import GPT
 
 gpt = GPT.build(
@@ -31,7 +31,7 @@ gpt.generate(
 
 The default datamodule assumes that the data is in the format of parquet files. The implementation of the Gepeto Dataset is found on `gpt/modules/data/text_dataset.py`.
 
-```
+```python
 from gpt2 import GPT
 
 gpt = GPT.build(
@@ -53,7 +53,7 @@ gpt.train(
 
 The GPT module is built on top of a Lightning Module, so it supports logging with WandB, MLFlow, Tensorboard etc. 
 
-```
+```python
 from pytorch_lightning.loggers import WandbLogger
 
 logger = WandbLogger(log_model=False, project="gpt2")
@@ -70,7 +70,7 @@ gpt.train(
 
 All of the datasets used for the training runs came from Hugging Face Datasets.
 
-```
+```python
 REPO_ID = "wikitext"
 wiki_text_1 = hf_hub_download(repo_id=REPO_ID, filename="wikitext-103-v1/train-00000-of-00002.parquet", repo_type="dataset", token=HF_TOKEN)
 wiki_text_2 = hf_hub_download(repo_id=REPO_ID, filename="wikitext-103-v1/train-00001-of-00002.parquet", repo_type="dataset", token=HF_TOKEN)
