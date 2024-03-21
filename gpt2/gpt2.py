@@ -110,8 +110,8 @@ class GPT2:
     
     def load_datamodule(
             self,
-            dataset: Literal["shakespeare", "tinystrange", "wikitext", "gepeto"], # TODO: Add more datasets,
             data_path: Union[str, List[str]],
+            dataset: Optional[Literal["shakespeare", "tinystrange", "wikitext", "gepeto"]] = "gepeto",
             batch_size: Optional[int] = 8,
             train_test_split: Optional[float] = 0.8,
             max_length: Optional[int] = 1024,
