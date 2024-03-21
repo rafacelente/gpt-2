@@ -42,7 +42,7 @@ class GPT2:
     def load_checkpoint(self, path: str):
         self.module = GPT2Module.load_from_checkpoint(path, model=self.module.model)
 
-    def load_weights_from_hf(self, model_name: str):
+    def load_weights_from_hf(self, model_name: str = "gpt2"):
         assert self.module is not None, "module must be loaded before loading weights"
         self.module.load_weights_from_hf(model_name)
 
